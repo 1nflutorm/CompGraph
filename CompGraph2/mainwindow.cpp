@@ -6,14 +6,25 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
 
 	connect(m_addPointsButton, &QPushButton::clicked, this, &MainWindow::addPoints);
 	connect(m_redrawButton, &QPushButton::clicked, this, &MainWindow::redraw);
+
+	addPoints();
 }
 
 MainWindow::~MainWindow() 
 {
+	if (m_centraWidget)
+	{
+		delete m_centraWidget;
+	}
 }
 
 void MainWindow::redraw()
 {
+	if (!m_uiPoints.size())
+	{
+		return;
+	}
+
 	m_matrix = CMatrix<double>(m_pointCountSpinBox->value(), 2);
 	for (int i = 0; i < m_uiPoints.size(); i++)
 	{
@@ -23,10 +34,11 @@ void MainWindow::redraw()
 
 	m_plot->clearGraphs();
 	QCPGraph* splineGraph = m_plot->addGraph();//index 0 - always spline graph
+	splineGraph->setPen(QColor(255, 20, 147));
 	for (int i = 0; i < m_matrix.getRowCount(); i++)
 	{
 		QCPGraph* graph = m_plot->addGraph();
-		graph->setData(QVector{ m_matrix[i][0] }, QVector{ m_matrix[i][1]});
+		graph->setData(QVector{ m_matrix[i][0] }, QVector{ m_matrix[i][1] });
 		graph->setPen(QColor(50, 50, 50, 255));
 		graph->setLineStyle(QCPGraph::lsNone);
 		graph->setScatterStyle(QCPScatterStyle(QCPScatterStyle::ssDisc, 4));
@@ -47,6 +59,7 @@ void MainWindow::setupWindow()
 {
 	m_centraWidget = new QWidget;
 	m_layout = new QGridLayout(m_centraWidget);
+	m_centraWidget->setMinimumSize(800, 600);
 
 	m_plot = new QCustomPlot(m_centraWidget);
 	m_plot->setInteraction(QCP::iRangeZoom, true);
@@ -88,6 +101,7 @@ void MainWindow::addPoints()
 			m_layout->removeWidget(m_uiPoints[m_uiPoints.size() - 1]->m_yLabel);
 			m_layout->removeWidget(m_uiPoints[m_uiPoints.size() - 1]->m_xSpinBox);
 			m_layout->removeWidget(m_uiPoints[m_uiPoints.size() - 1]->m_ySpinBox);
+
 			delete m_uiPoints[m_uiPoints.size() - 1];
 			m_uiPoints.remove(m_uiPoints.size() - 1);
 
