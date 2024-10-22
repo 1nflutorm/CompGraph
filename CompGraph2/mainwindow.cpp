@@ -25,32 +25,46 @@ void MainWindow::redraw()
 		return;
 	}
 
+	m_plot->legend->setVisible(true);
+
+	QVector<double> x_original;//для построения исходной ломаной 
+	QVector<double> y_original;
+
 	m_matrix = CMatrix<double>(m_pointCountSpinBox->value(), 2);
 	for (int i = 0; i < m_uiPoints.size(); i++)
 	{
 		m_matrix[i][0] = m_uiPoints[i]->m_xSpinBox->value();
+		x_original.push_back(m_uiPoints[i]->m_xSpinBox->value());
+
 		m_matrix[i][1] = m_uiPoints[i]->m_ySpinBox->value();
+		y_original.push_back(m_uiPoints[i]->m_ySpinBox->value());
 	}
 
 	m_plot->clearGraphs();
-	QCPGraph* splineGraph = m_plot->addGraph();//index 0 - always spline graph
+
+	QCPGraph* splineGraph = m_plot->addGraph();
+	splineGraph->setName("Кривая Безье");
 	splineGraph->setPen(QColor(255, 20, 147));
-	for (int i = 0; i < m_matrix.getRowCount(); i++)
-	{
-		QCPGraph* graph = m_plot->addGraph();
-		graph->setData(QVector{ m_matrix[i][0] }, QVector{ m_matrix[i][1] });
-		graph->setPen(QColor(50, 50, 50, 255));
-		graph->setLineStyle(QCPGraph::lsNone);
-		graph->setScatterStyle(QCPScatterStyle(QCPScatterStyle::ssDisc, 4));
-	}
 
 	CSpline spline{ m_matrix };
 	spline.calculateSpline();
-
 	QVector<double> x = spline.getPx();
 	QVector<double> y = spline.getPy();
-
 	splineGraph->addData(x, y, true);
+
+	QCPGraph* originalGraph = m_plot->addGraph();
+	originalGraph->setName("Исходная ломаная");
+
+	QPen pen;
+	pen.setColor(QColor(50, 50, 50, 255));
+	pen.setStyle(Qt::DashLine);
+	originalGraph->setPen(pen);
+
+	originalGraph->setLineStyle(QCPGraph::lsLine);
+	originalGraph->setScatterStyle(QCPScatterStyle(QCPScatterStyle::ssDisc, 4));
+
+	originalGraph->addData(x_original, y_original, true);
+
 
 	m_plot->replot();
 }
